@@ -56,7 +56,7 @@ public class UserController {
     }
 
     private Long getNextId() {
-        log.trace("getNextId is called");
+        log.trace("getNextId is called.");
         long currentMaxId = users.keySet()
                 .stream()
                 .mapToLong(id -> id)
