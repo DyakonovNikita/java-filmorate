@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.storage.film;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RequestBody;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -35,7 +34,7 @@ public class InMemoryFilmStorage implements FilmStorage {
         return films.values();
     }
 
-    public Film create(@RequestBody Film film) {
+    public Film create(Film film) {
         log.trace("create is called");
         validateFilm(film);
         log.debug("film passed validation");
