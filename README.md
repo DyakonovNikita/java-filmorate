@@ -12,8 +12,8 @@ FROM users
 WHERE id IN (SELECT request_recepient_id
              FROM friends
              WHERE status=true
-                   AND request_sender_id=1) OR
-      id IN (SELECT request_sender_id
+                   AND request_sender_id=1)
+      OR id IN (SELECT request_sender_id
              FROM friends
              WHERE status=true
                    AND request_recepient_id=1);
