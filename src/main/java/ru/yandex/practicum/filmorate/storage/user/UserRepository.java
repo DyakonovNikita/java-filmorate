@@ -16,6 +16,7 @@ public class UserRepository implements UserStorage {
 
     private final UserRowMapper mapper;
 
+
     public List<User> findAll() {
         String query = "select * from app_users";
         return jdbcTemplate.query(query, mapper);
