@@ -16,10 +16,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Repository
@@ -125,7 +122,7 @@ public class FilmDbStorage implements FilmStorage {
         film.setGenres(film.getGenres().stream()
                 .map(genre -> findGenreById(genre.getId()).get())
                 .sorted(Comparator.comparing(Genre::getId))
-                .collect(Collectors.toSet()));
+                .collect(Collectors.toCollection(LinkedHashSet::new)));
 
         for (Genre genre : film.getGenres()) {
             createGenre(film.getId(), genre);
