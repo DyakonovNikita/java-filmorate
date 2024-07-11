@@ -39,7 +39,7 @@ public class InMemoryUserStorage implements UserStorage {
         return user;
     }
 
-    private void validateUser(User user) {
+    static void validateUser(User user) {
         if (user.getEmail().isEmpty() || !user.getEmail().contains("@")) {
             log.warn("Некорректный email = {}", user.getEmail());
             throw new ValidationException("Некорректный e-mail");

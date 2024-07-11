@@ -12,6 +12,7 @@ import java.util.Set;
 @Getter
 @Setter
 @ToString
+@NoArgsConstructor
 public class Film {
     private Long id;
     private String name;
