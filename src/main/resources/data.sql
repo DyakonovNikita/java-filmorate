@@ -1,0 +1,1 @@
+insert into APP_USERS (EMAIL, LOGIN, NAME, BIRTHDAY) VALUES ( 'ga@', 'login', 'name', CAST('2002-12-12' AS DATE));

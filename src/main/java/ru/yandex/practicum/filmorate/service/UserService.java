@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -8,10 +9,14 @@ import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 import java.util.*;
 
 @Service
-@RequiredArgsConstructor
 public class UserService {
+
+    @Qualifier("UserRepository")
     private final UserStorage userStorage;
 
+    public UserService(@Qualifier("UserRepository") UserStorage userStorage) {
+        this.userStorage = userStorage;
+    }
 
     public User find(Long userId) {
         return userStorage.find(userId);
