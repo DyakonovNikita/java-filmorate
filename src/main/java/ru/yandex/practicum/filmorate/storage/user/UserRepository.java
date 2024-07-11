@@ -21,7 +21,7 @@ public class UserRepository implements UserStorage {
     }
 
     public User find(Long userId) {
-        String query = "select u.* from app_users AS u JOIN where id = ?";
+        String query = "select u.* from app_users AS u JOIN PUBLIC.FRIENDS F on u.ID = F.RECIPIENT_ID where id = ?";
         System.out.print(jdbcTemplate.query(query, mapper, userId));
         return jdbcTemplate.query(query, mapper, userId).getFirst();
     }
