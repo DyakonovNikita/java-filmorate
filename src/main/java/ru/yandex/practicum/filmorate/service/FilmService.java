@@ -3,37 +3,39 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.RatingMPANotFoundException;
+import ru.yandex.practicum.filmorate.exception.GenreNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.RatingMPA;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.likeStorage.LikeStorage;
+import ru.yandex.practicum.filmorate.storage.like.LikeStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class FilmService {
 
-    @Qualifier("filmRepository")
+    @Qualifier("filmDbStorage")
     private final FilmStorage filmStorage;
-    @Qualifier("userRepository")
+    @Qualifier("userDbStorage")
     private final UserStorage userStorage;
-    @Qualifier("likeRepository")
+    @Qualifier("likeDbStorage")
     private final LikeStorage likeStorage;
 
-
     public Film create(Film film) {
-        return filmStorage.create(film);
+        return filmStorage.create(film).get();
     }
 
     public Film update(Film film) {
         if (findFilmById(film.getId()) == null) {
             return null;
         }
-        return filmStorage.update(film);
+        return filmStorage.update(film).get();
     }
 
     public boolean delete(Film film) {
@@ -41,15 +43,15 @@ public class FilmService {
     }
 
     public List<Film> findFilms() {
-        return filmStorage.findAll().stream()
+        return filmStorage.findFilms().stream()
                 .peek(film -> film.setLikes(new HashSet<>(likeStorage.findLikes(film))))
                 .collect(Collectors.toList());
     }
 
     public Film findFilmById(long filmId) {
-        Film film = filmStorage.find(filmId);
-        film.setLikes(new HashSet<>(likeStorage.findLikes(film)));
-        return film;
+        return filmStorage.findFilmById(filmId).stream()
+                .peek(f -> f.setLikes(new HashSet<>(likeStorage.findLikes(f))))
+                .findFirst().get();
     }
 
     public boolean like(long id, long userId) {
@@ -78,9 +80,9 @@ public class FilmService {
 
     public List<Film> findPopularFilms(int count) {
         return findFilms().stream()
-            .sorted(this::compare)
-            .limit(count)
-            .collect(Collectors.toList());
+                .sorted(this::compare)
+                .limit(count)
+                .collect(Collectors.toList());
     }
 
     public List<Genre> findGenres() {
@@ -88,7 +90,10 @@ public class FilmService {
     }
 
     public Genre findGenreById(long genreId) {
-        return filmStorage.(genreId);
+        return filmStorage.findGenreById(genreId)
+                .orElseThrow(() -> {
+                    throw new GenreNotFoundException(String.format("Жанр № %d не найден", genreId));
+                });
     }
 
     public List<RatingMPA> findRatingMPAs() {
@@ -96,10 +101,14 @@ public class FilmService {
     }
 
     public RatingMPA findRatingMPAById(long ratingMPAId) {
-        return filmStorage.findRatingMPAById(ratingMPAId);
+        return filmStorage.findRatingMPAById(ratingMPAId)
+                .orElseThrow(() -> {
+                    throw new RatingMPANotFoundException(String.format("Рейтинг МПА № %d не найден", ratingMPAId));
+                });
     }
 
     private int compare(Film film1, Film film2) {
         return film2.getLikes().size() - film1.getLikes().size();
     }
+
 }

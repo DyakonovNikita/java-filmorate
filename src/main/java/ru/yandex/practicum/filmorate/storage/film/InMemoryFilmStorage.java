@@ -36,7 +36,7 @@ public class InMemoryFilmStorage implements FilmStorage {
         return films.values();
     }
 
-    public Film create(Film film) {
+    public Optional<Film> create(Film film) {
         log.trace("create is called");
         validateFilm(film);
         log.debug("film passed validation");
@@ -44,7 +44,7 @@ public class InMemoryFilmStorage implements FilmStorage {
         film.setId(getNextId());
         films.put(film.getId(), film);
         log.debug("new film with id = {} add into users map", film.getId());
-        return film;
+        return Optional.of(film);
     }
 
     private static void validateFilm(Film film) {
@@ -80,7 +80,7 @@ public class InMemoryFilmStorage implements FilmStorage {
         return ++currentMaxId;
     }
 
-    public Film update(Film newFilm) {
+    public Optional<Film> update(Film newFilm) {
         log.trace("update is called");
         if (newFilm.getId() == null) {
             log.warn("id is null");
@@ -95,7 +95,7 @@ public class InMemoryFilmStorage implements FilmStorage {
             oldFilm.setDescription(newFilm.getDescription());
             oldFilm.setReleaseDate(newFilm.getReleaseDate());
             oldFilm.setDuration(newFilm.getDuration());
-            return oldFilm;
+            return Optional.of(oldFilm);
         }
         log.warn("film with id = {} not found", newFilm.getId());
         throw new NotFoundException("Пост с id: " + newFilm.getId() + " не найден");
@@ -105,8 +105,23 @@ public class InMemoryFilmStorage implements FilmStorage {
         return films.remove(film.getId()).equals(film);
     }
 
+    @Override
+    public List<Film> findFilms() {
+        return List.of();
+    }
+
+    @Override
+    public Optional<Film> findFilmById(long filmId) {
+        return Optional.empty();
+    }
+
     public List<Genre> findGenres() {
         return genres.values().stream().toList();
+    }
+
+    @Override
+    public Optional<Genre> findGenreById(long genreId) {
+        return Optional.empty();
     }
 
     public Genre findGenreById(Long genreId) {
@@ -115,6 +130,11 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     public List<RatingMPA> findRatingMPAs() {
         return ratings.values().stream().toList();
+    }
+
+    @Override
+    public Optional<RatingMPA> findRatingMPAById(long ratingMPAId) {
+        return Optional.empty();
     }
 
     public RatingMPA findRatingMPAById(Long ratingId) {

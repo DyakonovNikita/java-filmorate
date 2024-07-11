@@ -6,11 +6,16 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
+import org.springframework.dao.EmptyResultDataAccessException;
 
 import java.sql.Date;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @Primary
@@ -19,8 +24,8 @@ public class UserDbStorage implements UserStorage {
 
     private final JdbcTemplate jdbcTemplate;
 
-    public User create(User user) {
-        String sqlQuery = "insert into app_users(name, email, login, birthday) values (?, ?, ?, ?)";
+    public Optional<User> create(User user) {
+        String sqlQuery = "insert into users(user_name, email, login, birthday) values (?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbcTemplate.update(connection -> {
@@ -33,33 +38,37 @@ public class UserDbStorage implements UserStorage {
         }, keyHolder);
 
         user.setId(keyHolder.getKey().longValue());
-        return user;
+        return Optional.of(user);
     }
 
-    public User update(User user) {
-        String sqlQuery = "update users set name = ?, email = ?, login = ?, birthday = ?" +
-                " where id = ?";
+    public Optional<User> update(User user) {
+        String sqlQuery = "update users set user_name = ?, email = ?, login = ?, birthday = ?" +
+                " where user_id = ?";
         jdbcTemplate.update(sqlQuery, user.getName(), user.getEmail(), user.getLogin(),
                 user.getBirthday(), user.getId());
-        return user;
+        return Optional.of(user);
     }
 
     public boolean delete(User user) {
-        if (findUserById(user.getId()) == null) {
+        if (findUserById(user.getId()).isEmpty()) {
             return false;
         }
-        String sqlQuery = "delete from app_users where id = ?";
+        String sqlQuery = "delete from users where user_id = ?";
         return jdbcTemplate.update(sqlQuery, user.getId()) > 0;
     }
 
-    public List<User> findAll() {
+    public List<User> findUsers() {
         String sqlQuery = "select * from users";
         return jdbcTemplate.query(sqlQuery, this::makeUser);
     }
 
-    public User find(Long userId) {
+    public Optional<User> findUserById(long userId) {
         String sqlQuery = "select * from users where user_id = ?";
-        return jdbcTemplate.queryForObject(sqlQuery, this::makeUser, userId);
+        try {
+            return Optional.of(jdbcTemplate.queryForObject(sqlQuery, this::makeUser, userId));
+        } catch (EmptyResultDataAccessException e) {
+            throw new NotFoundException(String.format("Пользователь № %d не найден", userId));
+        }
     }
 
     private User makeUser(ResultSet rs, int rowNum) throws SQLException {

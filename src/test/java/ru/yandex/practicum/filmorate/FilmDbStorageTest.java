@@ -15,16 +15,17 @@ import ru.yandex.practicum.filmorate.storage.film.FilmDbStorage;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @AutoConfigureTestDatabase
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-class FilmControllerTest {
+class FilmDbStorageTest {
 
     private final FilmDbStorage filmStorage;
     private Film film1;
@@ -58,8 +59,8 @@ class FilmControllerTest {
 
     @Test
     public void testCreateFilm() {
-        film1 = filmStorage.create(film1);
-        final List<Film> films = new ArrayList<>(filmStorage.findAll());
+        film1 = filmStorage.create(film1).get();
+        final List<Film> films = new ArrayList<>(filmStorage.findFilms());
 
         assertNotNull(films, "Фильм не найден.");
         assertEquals(1, films.size(), "Неверное количество фильмов.");
@@ -69,10 +70,10 @@ class FilmControllerTest {
 
     @Test
     void testUpdateFilm() {
-        film1 = filmStorage.create(film1);
+        film1 = filmStorage.create(film1).get();
         film2.setId(1L);
-        film2 = filmStorage.update(film2);
-        final List<Film> films = new ArrayList<>(filmStorage.findAll());
+        film2 = filmStorage.update(film2).get();
+        final List<Film> films = new ArrayList<>(filmStorage.findFilms());
 
         assertNotNull(films, "Фильм не найден.");
         assertEquals(1, films.size(), "Неверное количество фильмов.");
@@ -82,10 +83,10 @@ class FilmControllerTest {
 
     @Test
     void testDeleteFilm() {
-        film1 = filmStorage.create(film1);
-        film2 = filmStorage.create(film2);
+        film1 = filmStorage.create(film1).get();
+        film2 = filmStorage.create(film2).get();
         filmStorage.delete(film1);
-        final List<Film> films = new ArrayList<>(filmStorage.findAll());
+        final List<Film> films = new ArrayList<>(filmStorage.findFilms());
 
         assertNotNull(films, "Фильм не найден.");
         assertEquals(1, films.size(), "Неверное количество фильмов.");
@@ -95,10 +96,10 @@ class FilmControllerTest {
 
     @Test
     void testFindUsers() {
-        film1 = filmStorage.create(film1);
-        film2 = filmStorage.create(film2);
-        film3 = filmStorage.create(film3);
-        final List<Film> films = new ArrayList<>(filmStorage.findAll());
+        film1 = filmStorage.create(film1).get();
+        film2 = filmStorage.create(film2).get();
+        film3 = filmStorage.create(film3).get();
+        final List<Film> films = new ArrayList<>(filmStorage.findFilms());
 
         assertNotNull(films, "Фильмы не возвращаются.");
         assertEquals(3, films.size(), "Неверное количество фильмов.");
@@ -110,7 +111,13 @@ class FilmControllerTest {
     @Test
     public void testFindFilmById() {
         filmStorage.create(film1);
-        Film film = filmStorage.findFilmById(1);
-        assertThat(film).hasFieldOrPropertyWithValue("id", 1L);
+        Optional<Film> filmOptional = filmStorage.findFilmById(1);
+
+        assertThat(filmOptional)
+                .isPresent()
+                .hasValueSatisfying(film ->
+                        assertThat(film).hasFieldOrPropertyWithValue("id", 1L)
+                );
     }
+
 }

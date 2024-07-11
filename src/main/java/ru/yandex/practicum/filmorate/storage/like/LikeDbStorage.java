@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.storage.likeStorage;
+package ru.yandex.practicum.filmorate.storage.like;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;

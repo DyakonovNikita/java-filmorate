@@ -7,18 +7,19 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Component
 public class InMemoryUserStorage implements UserStorage {
     private final Map<Long, User> users = new HashMap<>();
 
-    public Collection<User> findAll() {
+    public List<User> findAll() {
         log.trace("findAll is called");
-        return users.values();
+        return (List<User>) users.values();
     }
 
     public User find(Long userId) {
@@ -28,7 +29,7 @@ public class InMemoryUserStorage implements UserStorage {
         throw new NotFoundException("Пользователь id: " + userId + " не найден");
     }
 
-    public User create(User user) {
+    public Optional<User> create(User user) {
         log.trace("create is called");
         validateUser(user);
         log.debug("new user passed validation");
@@ -36,7 +37,7 @@ public class InMemoryUserStorage implements UserStorage {
         user.setId(getNextId());
         users.put(user.getId(), user);
         log.debug("new user with id = {} add into users map", user.getId());
-        return user;
+        return Optional.of(user);
     }
 
     static void validateUser(User user) {
@@ -69,7 +70,7 @@ public class InMemoryUserStorage implements UserStorage {
         return ++currentMaxId;
     }
 
-    public User update(User newUser) {
+    public Optional<User> update(User newUser) {
         log.trace("update is called");
         if (newUser.getId() == null) {
             log.warn("id is null");
@@ -84,7 +85,7 @@ public class InMemoryUserStorage implements UserStorage {
             oldUser.setEmail(newUser.getEmail());
             oldUser.setLogin(newUser.getLogin());
             oldUser.setBirthday(newUser.getBirthday());
-            return oldUser;
+            return Optional.of(oldUser);
         }
         log.warn("user with id = {} not found", newUser.getId());
         throw new NotFoundException("Пользователь id: " + newUser.getId() + " не найден");
@@ -93,5 +94,15 @@ public class InMemoryUserStorage implements UserStorage {
     @Override
     public boolean delete(User user) {
         return users.remove(user.getId()).equals(user);
+    }
+
+    @Override
+    public List<User> findUsers() {
+        return List.of();
+    }
+
+    @Override
+    public Optional<User> findUserById(long userId) {
+        return Optional.empty();
     }
 }
