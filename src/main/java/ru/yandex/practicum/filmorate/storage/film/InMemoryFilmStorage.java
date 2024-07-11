@@ -5,16 +5,18 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.RatingMPA;
 
 import java.time.LocalDate;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Component
 public class InMemoryFilmStorage implements FilmStorage {
     private final Map<Long, Film> films = new HashMap<>();
+    private final Map<Long, Genre> genres = new HashMap<>();
+    private final Map<Long, RatingMPA> ratings = new HashMap<>();
     private static final LocalDate movieBirthDate;
 
     static {
@@ -61,7 +63,7 @@ public class InMemoryFilmStorage implements FilmStorage {
             throw new ValidationException("Минимальная дата релиза: 28.12.1895");
         }
 
-        if (film.getDuration().isNegative()) {
+        if (film.getDuration() < 0) {
             log.warn("duration is negative");
             throw new ValidationException("Продолжительность фильма не может быть отрицательной");
         }
@@ -97,5 +99,25 @@ public class InMemoryFilmStorage implements FilmStorage {
         }
         log.warn("film with id = {} not found", newFilm.getId());
         throw new NotFoundException("Пост с id: " + newFilm.getId() + " не найден");
+    }
+
+    public boolean delete(Film film) {
+        return films.remove(film.getId()).equals(film);
+    }
+
+    public List<Genre> findGenres() {
+        return genres.values().stream().toList();
+    }
+
+    public Genre findGenreById(Long genreId) {
+        return genres.get(genreId);
+    }
+
+    public List<RatingMPA> findRatingMPAs() {
+        return ratings.values().stream().toList();
+    }
+
+    public RatingMPA findRatingMPAById(Long ratingId) {
+        return ratings.get(ratingId);
     }
 }

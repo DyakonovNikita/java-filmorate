@@ -89,4 +89,9 @@ public class InMemoryUserStorage implements UserStorage {
         log.warn("user with id = {} not found", newUser.getId());
         throw new NotFoundException("Пользователь id: " + newUser.getId() + " не найден");
     }
+
+    @Override
+    public boolean delete(User user) {
+        return users.remove(user.getId()).equals(user);
+    }
 }

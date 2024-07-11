@@ -1,83 +1,116 @@
 package ru.yandex.practicum.filmorate;
 
+import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.test.web.server.LocalServerPort;
-import ru.yandex.practicum.filmorate.controller.FilmController;
+import org.springframework.test.annotation.DirtiesContext;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.RatingMPA;
+import ru.yandex.practicum.filmorate.storage.film.FilmDbStorage;
 
-import java.time.Duration;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class FilmControllerTest {
+@SpringBootTest
+@AutoConfigureTestDatabase
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+class FilmControllerTest {
 
-    @LocalServerPort
-    private int port;
+    private final FilmDbStorage filmStorage;
+    private Film film1;
+    private Film film2;
+    private Film film3;
 
-    @Autowired
-    private FilmController filmController;
-
-    @Autowired
-    private TestRestTemplate restTemplate;
-
-    @Test
-    void shouldPostNewFilms() {
-        Film film = new Film(null, "Имя", "Описание",
-                LocalDate.of(2000, 12, 20), Duration.ofHours(2), null);
-        assertThat(this.restTemplate.postForObject("http://localhost:" + port + "/films", film, String.class))
-                .contains("{\"id\":1,\"name\":\"Имя\",\"description\":\"Описание\",\"releaseDate\":\"2000-12-20\"," +
-                        "\"duration\":7200.000000000,\"likedUserIdSet\":[]}");
+    @BeforeEach
+    public void beforeEach() {
+        RatingMPA ratingMPA3 = new RatingMPA(3L, "PG-13", "детям до 13 лет просмотр не желателен");
+        RatingMPA ratingMPA4 = new RatingMPA(4L, "R",
+                "лицам до 17 лет просматривать фильм можно только в присутствии взрослого");
+        Genre genre1 = new Genre(1L, "Комедия");
+        Genre genre2 = new Genre(2L, "Драма");
+        Genre genre5 = new Genre(5L, "Документальный");
+        film1 = new Film("film 1", "FIlm 1 description",
+                LocalDate.of(2000, 01, 01));
+        film1.setDuration(180);
+        film1.setGenres(Set.of(genre1, genre2, genre5));
+        film1.setMpa(ratingMPA4);
+        film2 = new Film("film 2", "FIlm 2 description",
+                LocalDate.of(2010, 02, 22));
+        film2.setDuration(122);
+        film2.setGenres(Set.of(genre2));
+        film2.setMpa(ratingMPA3);
+        film3 = new Film("film 1", "FIlm 1 description",
+                LocalDate.of(2020, 03, 31));
+        film3.setDuration(209);
+        film3.setGenres(Set.of(genre1, genre5));
+        film3.setMpa(ratingMPA4);
     }
 
     @Test
-    void shouldGetFilms() {
-        Film film1 = new Film(null, "Имя2", "Описание2",
-                LocalDate.of(2001, 10, 20), Duration.ofHours(3), null);
-        this.restTemplate.postForLocation("http://localhost:" + port + "/films", film1);
-        assertThat(this.restTemplate.getForObject("http://localhost:" + port + "/films",
-                String.class)).contains("[{\"id\":1,\"name\":\"Имя3\",\"description\":\"Описание3\",\"releaseDate\":" +
-                "\"2002-09-20\",\"duration\":14400.000000000,\"likedUserIdSet\":[]},{\"id\":2,\"name\":\"Имя2\"," +
-                "\"description\":\"Описание2\",\"releaseDate\":\"2001-10-20\",\"duration\":10800.000000000," +
-                "\"likedUserIdSet\":[]}]");
+    public void testCreateFilm() {
+        film1 = filmStorage.create(film1);
+        final List<Film> films = new ArrayList<>(filmStorage.findAll());
+
+        assertNotNull(films, "Фильм не найден.");
+        assertEquals(1, films.size(), "Неверное количество фильмов.");
+        assertTrue(films.contains(film1), "Фильм не совпадает.");
+        assertEquals(film1, films.get(0), "Фильм не совпадает.");
     }
 
     @Test
-    void shouldPutFilms() {
-        Film film2 = new Film(1L, "Имя3", "Описание3",
-                LocalDate.of(2002, 9, 20), Duration.ofHours(4), null);
-        this.restTemplate.put("http://localhost:" + port + "/films", film2);
-        assertThat(this.restTemplate.getForObject("http://localhost:" + port + "/films",
-                String.class)).contains("[{\"id\":1,\"name\":\"Имя3\",\"description\":\"Описание3\",\"releaseDate\":" +
-                "\"2002-09-20\",\"duration\":14400.000000000,\"likedUserIdSet\":[]}]");
+    void testUpdateFilm() {
+        film1 = filmStorage.create(film1);
+        film2.setId(1L);
+        film2 = filmStorage.update(film2);
+        final List<Film> films = new ArrayList<>(filmStorage.findAll());
+
+        assertNotNull(films, "Фильм не найден.");
+        assertEquals(1, films.size(), "Неверное количество фильмов.");
+        assertFalse(films.contains(film1), "Фильм совпадает.");
+        assertTrue(films.contains(film2), "Фильм не совпадает.");
     }
 
     @Test
-    void shouldAddLikes() {
-        User user = new User(null, "email@email.com", "Login", "Name",
-                LocalDate.of(2000, 1, 19), null);
-        this.restTemplate.postForLocation("http://localhost:" + port + "/users", user);
-        Film film = new Film(null, "Имя", "Описание",
-                LocalDate.of(2000, 12, 20), Duration.ofHours(2), null);
-        this.restTemplate.postForLocation("http://localhost:" + port + "/films", film);
-        this.restTemplate.put("http://localhost:" + port + "/films/1/like/1", null);
-        assertTrue(this.restTemplate.getForObject("http://localhost:" + port + "/films/1", Film.class)
-                .getLikedUserIdSet()
-                .contains(1L));
+    void testDeleteFilm() {
+        film1 = filmStorage.create(film1);
+        film2 = filmStorage.create(film2);
+        filmStorage.delete(film1);
+        final List<Film> films = new ArrayList<>(filmStorage.findAll());
+
+        assertNotNull(films, "Фильм не найден.");
+        assertEquals(1, films.size(), "Неверное количество фильмов.");
+        assertFalse(films.contains(film1), "Фильм совпадает.");
+        assertTrue(films.contains(film2), "Фильм не совпадает.");
     }
 
     @Test
-    void shouldDeleteLikes() {
-        this.restTemplate.delete("http://localhost:" + port + "/films/1/like/1");
-        assertFalse(this.restTemplate.getForObject("http://localhost:" + port + "/films/1", Film.class)
-                .getLikedUserIdSet()
-                .contains(1L));
+    void testFindUsers() {
+        film1 = filmStorage.create(film1);
+        film2 = filmStorage.create(film2);
+        film3 = filmStorage.create(film3);
+        final List<Film> films = new ArrayList<>(filmStorage.findAll());
+
+        assertNotNull(films, "Фильмы не возвращаются.");
+        assertEquals(3, films.size(), "Неверное количество фильмов.");
+        assertTrue(films.contains(film1), "Фильм не записался.");
+        assertTrue(films.contains(film2), "Фильм не записался.");
+        assertTrue(films.contains(film3), "Фильм не записался.");
+    }
+
+    @Test
+    public void testFindFilmById() {
+        filmStorage.create(film1);
+        Film film = filmStorage.findFilmById(1);
+        assertThat(film).hasFieldOrPropertyWithValue("id", 1L);
     }
 }

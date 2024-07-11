@@ -1,33 +1,30 @@
 package ru.yandex.practicum.filmorate.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
-@Getter
-@Setter
-@ToString
-@NoArgsConstructor
+@Data
 public class Film {
-    private Long id;
-    private String name;
-    private String description;
-    private LocalDate releaseDate;
-    @JsonFormat(shape = JsonFormat.Shape.NUMBER_INT)
-    private Duration duration;
-    private Set<Long> likedUserIdSet;
 
-    public Film(Long id, String name, String description, LocalDate releaseDate, Duration duration, Set<Long> likedUserIdSet) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.releaseDate = releaseDate;
-        this.duration = duration;
-        this.likedUserIdSet = Objects.requireNonNullElseGet(likedUserIdSet, HashSet::new);
-    }
+    private Long id;
+    @NonNull
+    @NotBlank(message = "Ошибка! Название не может быть пустым.")
+    private String name;
+    @NonNull
+    private String description;
+    @NonNull
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate releaseDate;
+    @Positive(message = "Ошибка! Продолжительность фильма должна быть положительной.")
+    private int duration;
+    private int rate;
+    private Set<Long> likes = new HashSet<>();
+    private Set<Genre> genres = new HashSet<>();
+    private RatingMPA mpa;
 }
