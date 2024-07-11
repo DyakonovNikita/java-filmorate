@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dal.UserRowMapper;
@@ -18,7 +17,7 @@ public class UserRepository implements UserStorage {
 
 
     public List<User> findAll() {
-        String query = "select * from app_users";
+        String query = "SELECT * FROM APP_USERS";
         return jdbcTemplate.query(query, mapper);
     }
 
